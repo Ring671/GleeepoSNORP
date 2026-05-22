@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Medio - Video Streaming App</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23ffffff'/%3E%3Cpolygon points='40,25 75,50 40,75' fill='%231a3a5c'/%3E%3C/svg%3E">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        .app {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #1a1a1a;
+        }
+
+        .top-bar {
+            background: #1a3a5c;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 32px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            background: #ffffff;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a3a5c;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-link {
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #ffffff;
+            cursor: pointer;
+            padding: 0;
+            font-weight: 400;
+        }
+
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 450px;
+            margin: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            font-size: 15px;
+            background: #ffffff;
+            color: #1a1a1a;
+            outline: none;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .guest-text {
+            font-size: 16px;
+            color: #ffffff;
+        }
+
+        .login-link {
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #ffffff;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .login-link:hover {
+            text-decoration: underline;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 32px;
+            background: #1a1a1a;
+        }
+
+        .all-videos-heading {
+            font-size: 18px;
+            font-weight: 500;
+            color: #ffffff;
+            margin-bottom: 32px;
+        }
+
+        .empty-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+
+        .empty-message {
+            font-size: 15px;
+            color: #888888;
+            text-align: center;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 28px;
+        }
+
+        .video-card {
+            background: #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .video-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .thumbnail {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: #2a2a2a;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #2a2a2a;
+            font-size: 40px;
+            color: #666;
+        }
+
+        .play-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            font-size: 55px;
+            transition: 0.2s;
+        }
+
+        .video-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .video-info {
+            padding: 12px 14px;
+        }
+
+        .video-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .video-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .ai-badge {
+            background: #aa8a2a;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+
+        .video-owner {
+            font-size: 13px;
+            color: #4a7a9a;
+            margin-bottom: 4px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .video-owner:hover {
+            text-decoration: underline;
+        }
+
+        .video-time {
+            font-size: 12px;
+            color: #888888;
+            margin-bottom: 6px;
+        }
+
+        .video-hashtags {
+            font-size: 12px;
+            color: #6a8a9a;
+            margin-top: 4px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .auth-modal, .upload-modal, .profile-modal, .edit-modal {
+            background: #2a2a2a;
+            width: 90%;
+            max-width: 420px;
+            padding: 32px;
+            border-radius: 14px;
+        }
+
+        .auth-modal h3, .upload-modal h3, .profile-modal h3, .edit-modal h3 {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #cccccc;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #1a3a5c;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: #444;
+            color: #ffffff;
+        }
+
+        .modal-btn.primary {
+            background: #1a3a5c;
+        }
+
+        .switch-auth {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 13px;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .switch-auth span {
+            color: #4a7a9a;
+        }
+
+        .thumbnail-preview {
+            width: 100%;
+            height: 110px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-size: cover;
+            background-position: center;
+            color: #888;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid #444;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            color: #ffffff;
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 22px;
+            background: #444;
+            border-radius: 22px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .toggle-switch.active {
+            background: #1a3a5c;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            left: 24px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            font-size: 14px;
+            color: #ffffff;
+        }
+
+        /* Player */
+        .player-screen {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        .video-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: black;
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .player-info {
+            padding: 14px 20px;
+            background: #1a1a1a;
+            transition: opacity 0.3s ease;
+        }
+
+        .player-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .player-title {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .edit-btn {
+            background: #444;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #555;
+        }
+
+        .player-ai-badge {
+            background: #aa8a2a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .player-owner {
+            font-size: 14px;
+            color: #4a7a9a;
+            margin-bottom: 4px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .player-owner:hover {
+            text-decoration: underline;
+        }
+
+        .player-time {
+            font-size: 12px;
+            color: #888888;
+            margin-bottom: 10px;
+        }
+
+        .controls-bar {
+            background: #1a1a1a;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            border-top: 1px solid #333;
+            transition: opacity 0.3s ease;
+        }
+
+        .ctrl-btn {
+            background: #333;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #ffffff;
+        }
+
+        .ctrl-btn.play {
+            background: #1a3a5c;
+        }
+
+        .progress-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-bar-bg {
+            flex: 1;
+            height: 4px;
+            background: #333;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #1a3a5c;
+            width: 0%;
+            border-radius: 2px;
+        }
+
+        /* Fullscreen auto-hide */
+        .player-screen:fullscreen {
+            background: black;
+        }
+        
+        .player-screen:fullscreen .controls-bar,
+        .player-screen:fullscreen .player-info {
+            transition: opacity 0.3s ease;
+        }
+        
+        .player-screen:fullscreen .controls-bar.hide-controls,
+        .player-screen:fullscreen .player-info.hide-controls {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .player-screen:fullscreen .controls-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            margin: 0;
+            border-radius: 12px;
+        }
+        
+        .player-screen:fullscreen .player-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 12px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-size: 13px;
+            z-index: 1100;
+            animation: fadeOut 2s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="top-bar">
+        <div class="nav-left">
+            <div class="logo" id="homeLogoBtn">
+                <div class="logo-icon">▶</div>
+                <span class="logo-text">Medio</span>
+            </div>
+            <div class="nav-links">
+                <button class="nav-link" id="homeBtn">Home</button>
+                <button class="nav-link" id="uploadBtn">Upload</button>
+            </div>
+        </div>
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search videos... use #hashtag">
+        </div>
+        <div class="nav-right">
+            <span class="guest-text" id="userDisplay">Guest</span>
+            <button class="login-link" id="authBtn">Login</button>
+        </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="all-videos-heading" id="pageHeading">All Videos</div>
+        <div class="empty-state">
+            <div class="empty-message">No videos, post one!</div>
+        </div>
+    </div>
+</div>
+
+<!-- Auth Modal -->
+<div id="authModal" class="modal-overlay">
+    <div class="auth-modal">
+        <h3 id="authTitle">Login</h3>
+        <div class="input-group"><label>Username</label><input type="text" id="loginUser"></div>
+        <div class="input-group"><label>Password</label><input type="password" id="loginPass"></div>
+        <div class="modal-buttons"><button class="modal-btn" id="cancelAuthBtn">Cancel</button><button class="modal-btn primary" id="submitAuthBtn">Login</button></div>
+        <div class="switch-auth" id="switchAuthBtn">No account? <span>Sign up</span></div>
+    </div>
+</div>
+
+<!-- Account Modal -->
+<div id="accountModal" class="modal-overlay">
+    <div class="profile-modal">
+        <h3>Account Settings</h3>
+        <div class="input-group"><label>Display Name</label><input type="text" id="accDisplayName"></div>
+        <div class="input-group"><label>Bio</label><textarea id="accBio" rows="2"></textarea></div>
+        <div class="setting-row"><span>Filter AI Content</span><div class="toggle-switch" id="aiToggle"></div></div>
+        <div class="stats-row"><span>Your Videos</span><span id="userVideoCount">0</span></div>
+        <div class="modal-buttons"><button class="modal-btn" id="closeAccountBtn">Cancel</button><button class="modal-btn primary" id="saveAccountBtn">Save</button><button class="modal-btn" id="logoutBtn">Logout</button></div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="modal-overlay">
+    <div class="upload-modal">
+        <h3>Upload Video</h3>
+        <div class="input-group"><label>Video File</label><input type="file" id="videoFile" accept="video/mp4, video/webm"></div>
+        <div class="input-group"><label>Title</label><input type="text" id="videoTitle"></div>
+        <div class="input-group"><label>Description</label><textarea id="videoDesc" rows="2"></textarea></div>
+        <div class="input-group"><label>Hashtags (comma)</label><input type="text" id="videoHashtags" placeholder="travel, vlog"></div>
+        <div class="input-group"><label>Thumbnail</label><input type="file" id="thumbFile" accept="image/*"><div id="thumbPreview" class="thumbnail-preview">Add thumbnail (optional)</div></div>
+        <div style="margin:12px 0;"><input type="checkbox" id="isAICheck"> <label>This is AI-generated content</label></div>
+        <div class="modal-buttons"><button class="modal-btn" id="cancelUploadBtn">Cancel</button><button class="modal-btn primary" id="confirmUploadBtn">Publish</button></div>
+    </div>
+</div>
+
+<!-- Edit Video Modal (for creators) -->
+<div id="editModal" class="modal-overlay">
+    <div class="edit-modal">
+        <h3>Edit Video</h3>
+        <div class="input-group"><label>Title</label><input type="text" id="editTitle" placeholder="Video title"></div>
+        <div class="input-group"><label>Thumbnail</label><input type="file" id="editThumbFile" accept="image/*"><div id="editThumbPreview" class="thumbnail-preview">Current thumbnail (click to change)</div></div>
+        <div class="modal-buttons"><button class="modal-btn" id="cancelEditBtn">Cancel</button><button class="modal-btn primary" id="saveEditBtn">Save Changes</button></div>
+    </div>
+</div>
+
+<script>
+    // ==================== MEDIO WITH VIDEO EDITING FOR CREATORS ====================
+    let currentUser = null;
+    let allUsers = {};
+    let globalVideos = [];
+    let dbConnections = {};
+    let lastUploadTime = 0;
+    const COOLDOWN_MS = 60000;
+    let filterAI = false;
+    let currentVideoElement = null;
+    let currentBlobUrl = null;
+    let updateInterval = null;
+    let currentVolume = 70;
+    let viewWatchTimeout = null;
+    let viewCounted = false;
+    let currentSearchQuery = '';
+    let mouseMoveTimeout = null;
+    let currentEditingVideo = null;
+
+    const mainContent = document.getElementById('mainContent');
+    const userDisplaySpan = document.getElementById('userDisplay');
+    const authBtn = document.getElementById('authBtn');
+    const searchInput = document.getElementById('searchInput');
+    const pageHeading = document.getElementById('pageHeading');
+
+    function hashPassword(pwd) { return btoa(pwd + "medio2025"); }
+
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return "just now";
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return "just now";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + " minute" + (minutes === 1 ? "" : "s") + " ago";
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + " hour" + (hours === 1 ? "" : "s") + " ago";
+        const days = Math.floor(hours / 24);
+        if (days < 7) return days + " day" + (days === 1 ? "" : "s") + " ago";
+        const weeks = Math.floor(days / 7);
+        if (weeks < 4) return weeks + " week" + (weeks === 1 ? "" : "s") + " ago";
+        const months = Math.floor(days / 30);
+        if (months < 12) return months + " month" + (months === 1 ? "" : "s") + " ago";
+        const years = Math.floor(days / 365);
+        return years + " year" + (years === 1 ? "" : "s") + " ago";
+    }
+
+    function extractFirstFrame(videoFile, callback) {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.muted = true;
+        const url = URL.createObjectURL(videoFile);
+        video.src = url;
+        
+        const onSeeked = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            URL.revokeObjectURL(url);
+            video.removeEventListener('seeked', onSeeked);
+            callback(thumbnailDataUrl);
+        };
+        
+        video.addEventListener('loadeddata', () => { video.currentTime = 0.1; });
+        video.addEventListener('seeked', onSeeked);
+        video.addEventListener('error', () => { URL.revokeObjectURL(url); callback(null); });
+    }
+
+    function loadData() {
+        const savedUsers = localStorage.getItem('medio_users');
+        if (savedUsers) {
+            allUsers = JSON.parse(savedUsers);
+        } else {
+            allUsers = { "demo": { username: "demo", passwordHash: hashPassword("demo"), displayName: "demo", bio: "Demo creator", videos: [], filterAI: false } };
+            saveData();
+        }
+        rebuildFeed();
+    }
+
+    function saveData() { 
+        localStorage.setItem('medio_users', JSON.stringify(allUsers)); 
+    }
+
+    async function getUserDB(username) {
+        if (dbConnections[username]) return dbConnections[username];
+        return new Promise((resolve) => {
+            const req = indexedDB.open(`medio_videos_${username}`, 1);
+            req.onupgradeneeded = (e) => { e.target.result.createObjectStore('videos', { keyPath: 'id' }); };
+            req.onsuccess = () => { dbConnections[username] = req.result; resolve(req.result); };
+        });
+    }
+
+    async function saveVideoBlob(username, videoId, blob) {
+        const db = await getUserDB(username);
+        const tx = db.transaction(['videos'], 'readwrite');
+        tx.objectStore('videos').put({ id: videoId, file: blob });
+        return new Promise(r => tx.oncomplete = r);
+    }
+
+    async function getVideoBlob(username, videoId) {
+        const db = await getUserDB(username);
+        return new Promise((resolve) => {
+            const tx = db.transaction(['videos'], 'readonly');
+            const req = tx.objectStore('videos').get(videoId);
+            req.onsuccess = () => resolve(req.result ? URL.createObjectURL(req.result.file) : null);
+        });
+    }
+
+    function rebuildFeed() {
+        globalVideos = [];
+        for (let uname in allUsers) {
+            const user = allUsers[uname];
+            if (user.banned) continue;
+            if (user.videos && user.videos.length) {
+                user.videos.forEach(v => {
+                    globalVideos.push({ 
+                        ...v, 
+                        uploader: uname, 
+                        uploaderName: user.displayName || uname, 
+                        uploaderBio: user.bio || "",
+                        views: v.views || 0, 
+                        uploadedAt: v.uploadedAt || Date.now(),
+                        isAI: v.isAI || false
+                    });
+                });
+            }
+        }
+        globalVideos.sort((a,b) => b.uploadedAt - a.uploadedAt);
+        applySearchAndRender();
+    }
+
+    function filterVideosBySearch(videos, query) {
+        if (!query.trim()) return videos;
+        const lowerQuery = query.toLowerCase().trim();
+        if (lowerQuery.startsWith('#')) {
+            return videos.filter(v => v.hashtags && v.hashtags.some(t => t.toLowerCase().includes(lowerQuery)));
+        }
+        return videos.filter(v => v.name.toLowerCase().includes(lowerQuery) || (v.description && v.description.toLowerCase().includes(lowerQuery)));
+    }
+
+    function applySearchAndRender() {
+        let feed = filterAI ? globalVideos.filter(v => !v.isAI) : globalVideos;
+        const filtered = filterVideosBySearch(feed, currentSearchQuery);
+        
+        pageHeading.innerHTML = currentSearchQuery.trim() ? 
+            (currentSearchQuery.trim().startsWith('#') ? `Videos with ${currentSearchQuery.trim()}` : `Search: "${currentSearchQuery.trim()}"`) : 'All Videos';
+        
+        if (filtered.length === 0) {
+            mainContent.innerHTML = `<div class="all-videos-heading">${pageHeading.innerHTML}</div><div class="empty-state"><div class="empty-message">No videos found</div></div>`;
+            return;
+        }
+        
+        mainContent.innerHTML = `<div class="all-videos-heading">${pageHeading.innerHTML}</div><div class="video-grid" id="videoGrid"></div>`;
+        const grid = document.getElementById('videoGrid');
+        filtered.forEach(video => {
+            const card = document.createElement('div'); card.className = 'video-card';
+            const thumbHtml = video.thumbnail ? `<img src="${video.thumbnail}">` : `<div class="thumbnail-placeholder">🎬</div>`;
+            const ownerDisplay = allUsers[video.uploader]?.displayName || video.uploader;
+            const hashtagsHtml = video.hashtags?.length ? `<div class="video-hashtags">${video.hashtags.slice(0,2).map(h => escapeHtml(h)).join(' ')}</div>` : '';
+            const aiBadgeHtml = video.isAI ? '<span class="ai-badge">🤖 AI</span>' : '';
+            card.innerHTML = `
+                <div class="thumbnail">${thumbHtml}<div class="play-overlay">▶</div></div>
+                <div class="video-info">
+                    <div class="video-title-row">
+                        <span class="video-title">${escapeHtml(video.name)}</span>
+                        ${aiBadgeHtml}
+                    </div>
+                    <div class="video-owner" data-owner="${video.uploader}">${escapeHtml(ownerDisplay)}</div>
+                    <div class="video-time">${formatTimeAgo(video.uploadedAt)}</div>
+                    ${hashtagsHtml}
+                </div>`;
+            card.querySelector('.thumbnail').onclick = () => playVideo(video);
+            card.querySelector('.video-owner').onclick = (e) => { e.stopPropagation(); filterByCreator(video.uploader); };
+            grid.appendChild(card);
+        });
+    }
+
+    function filterByCreator(creator) {
+        currentSearchQuery = '';
+        searchInput.value = '';
+        let feed = filterAI ? globalVideos.filter(v => !v.isAI) : globalVideos;
+        const creatorVideos = feed.filter(v => v.uploader === creator);
+        const displayName = allUsers[creator]?.displayName || creator;
+        pageHeading.innerHTML = `Videos by ${displayName}`;
+        
+        if (creatorVideos.length === 0) {
+            mainContent.innerHTML = `<div class="all-videos-heading">${pageHeading.innerHTML}</div><div class="empty-state"><div class="empty-message">No videos from this creator</div></div>`;
+            return;
+        }
+        
+        mainContent.innerHTML = `<div class="all-videos-heading">${pageHeading.innerHTML}</div><div class="video-grid" id="videoGrid"></div>`;
+        const grid = document.getElementById('videoGrid');
+        creatorVideos.forEach(video => {
+            const card = document.createElement('div'); card.className = 'video-card';
+            const thumbHtml = video.thumbnail ? `<img src="${video.thumbnail}">` : `<div class="thumbnail-placeholder">🎬</div>`;
+            const ownerDisplay = allUsers[video.uploader]?.displayName || video.uploader;
+            const aiBadgeHtml = video.isAI ? '<span class="ai-badge">🤖 AI</span>' : '';
+            card.innerHTML = `
+                <div class="thumbnail">${thumbHtml}<div class="play-overlay">▶</div></div>
+                <div class="video-info">
+                    <div class="video-title-row">
+                        <span class="video-title">${escapeHtml(video.name)}</span>
+                        ${aiBadgeHtml}
+                    </div>
+                    <div class="video-owner">${escapeHtml(ownerDisplay)}</div>
+                    <div class="video-time">${formatTimeAgo(video.uploadedAt)}</div>
+                </div>`;
+            card.querySelector('.thumbnail').onclick = () => playVideo(video);
+            grid.appendChild(card);
+        });
+    }
+
+    function escapeHtml(s) { if (!s) return ''; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+    function showToast(msg) { const t=document.createElement('div'); t.className='toast'; t.innerText=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2000); }
+
+    // Open edit modal for video (only if current user is the creator)
+    function openEditModal(video) {
+        if (!currentUser || currentUser.username !== video.uploader) {
+            showToast("Only the video creator can edit this video", true);
+            return;
+        }
+        currentEditingVideo = video;
+        document.getElementById('editTitle').value = video.name;
+        document.getElementById('editThumbPreview').innerHTML = 'Current thumbnail (click to change)';
+        document.getElementById('editThumbPreview').style.backgroundImage = '';
+        if (video.thumbnail) {
+            document.getElementById('editThumbPreview').style.backgroundImage = `url(${video.thumbnail})`;
+            document.getElementById('editThumbPreview').style.backgroundSize = 'cover';
+            document.getElementById('editThumbPreview').innerHTML = '';
+        }
+        document.getElementById('editModal').classList.add('active');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.remove('active');
+        currentEditingVideo = null;
+    }
+
+    async function saveVideoEdits() {
+        if (!currentEditingVideo || !currentUser) return;
+        
+        const newTitle = document.getElementById('editTitle').value.trim();
+        if (!newTitle) {
+            showToast("Title cannot be empty", true);
+            return;
+        }
+        
+        // Update video metadata in allUsers
+        const user = allUsers[currentEditingVideo.uploader];
+        if (user && user.videos) {
+            const videoIndex = user.videos.findIndex(v => v.id === currentEditingVideo.id);
+            if (videoIndex !== -1) {
+                user.videos[videoIndex].name = newTitle;
+                
+                // Handle thumbnail update if a new file was selected
+                const thumbFile = document.getElementById('editThumbFile').files[0];
+                if (thumbFile && thumbFile.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        user.videos[videoIndex].thumbnail = ev.target.result;
+                        saveData();
+                        rebuildFeed();
+                        closeEditModal();
+                        showToast("Video updated successfully!");
+                        // Refresh the player if it's currently playing
+                        if (currentVideoElement && currentEditingVideo.id === currentVideoElement.videoId) {
+                            playVideo(user.videos[videoIndex]);
+                        }
+                    };
+                    reader.readAsDataURL(thumbFile);
+                } else {
+                    saveData();
+                    rebuildFeed();
+                    closeEditModal();
+                    showToast("Video updated successfully!");
+                    if (currentVideoElement && currentEditingVideo.id === currentEditingVideo.id) {
+                        playVideo(user.videos[videoIndex]);
+                    }
+                }
+            }
+        }
+    }
+
+    function setupFullscreenAutoHide() {
+        const playerScreen = document.getElementById('playerScreen');
+        if (!playerScreen) return;
+        const controlsBar = document.querySelector('.controls-bar');
+        const playerInfo = document.querySelector('.player-info');
+        if (!controlsBar || !playerInfo) return;
+        
+        const showControls = () => {
+            controlsBar.classList.remove('hide-controls');
+            controlsBar.classList.add('show-controls');
+            playerInfo.classList.remove('hide-controls');
+            playerInfo.classList.add('show-controls');
+            if (mouseMoveTimeout) clearTimeout(mouseMoveTimeout);
+            mouseMoveTimeout = setTimeout(() => {
+                if (document.fullscreenElement) {
+                    controlsBar.classList.add('hide-controls');
+                    controlsBar.classList.remove('show-controls');
+                    playerInfo.classList.add('hide-controls');
+                    playerInfo.classList.remove('show-controls');
+                }
+            }, 2000);
+        };
+        
+        const handleMouseMove = () => { if (document.fullscreenElement) showControls(); };
+        playerScreen.addEventListener('mousemove', handleMouseMove);
+        playerScreen.addEventListener('click', handleMouseMove);
+        
+        const fullscreenChangeHandler = () => { if (document.fullscreenElement) showControls(); };
+        document.addEventListener('fullscreenchange', fullscreenChangeHandler);
+        
+        window._fullscreenCleanup = () => {
+            playerScreen.removeEventListener('mousemove', handleMouseMove);
+            playerScreen.removeEventListener('click', handleMouseMove);
+            document.removeEventListener('fullscreenchange', fullscreenChangeHandler);
+            if (mouseMoveTimeout) clearTimeout(mouseMoveTimeout);
+        };
+    }
+
+    function toggleFullscreen() {
+        const playerScreen = document.getElementById('playerScreen');
+        if (!playerScreen) return;
+        if (!document.fullscreenElement) {
+            playerScreen.requestFullscreen().then(() => setupFullscreenAutoHide()).catch(console.log);
+        } else {
+            document.exitFullscreen();
+            if (window._fullscreenCleanup) { window._fullscreenCleanup(); window._fullscreenCleanup = null; }
+        }
+    }
+
+    async function playVideo(video) {
+        const url = await getVideoBlob(video.uploader, video.id);
+        if (!url) { showToast("Cannot load video"); return; }
+        if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = url;
+        viewCounted = false;
+        if (viewWatchTimeout) clearTimeout(viewWatchTimeout);
+        renderPlayer(video, url);
+    }
+
+    function renderPlayer(video, url) {
+        const ownerDisplay = allUsers[video.uploader]?.displayName || video.uploader;
+        const ownerBio = allUsers[video.uploader]?.bio || "";
+        const hashtagsHtml = video.hashtags?.length ? `<div style="font-size:13px; color:#4a7a9a; margin-top:6px;">${video.hashtags.map(h => escapeHtml(h)).join(' ')}</div>` : '';
+        const aiBadgeHtml = video.isAI ? '<span class="player-ai-badge">🤖 AI-Generated Content</span>' : '';
+        const isCreator = currentUser && currentUser.username === video.uploader;
+        const editButtonHtml = isCreator ? '<button class="edit-btn" id="editVideoBtn">✏️ Edit Video</button>' : '';
+        
+        const html = `
+            <div class="player-screen" id="playerScreen">
+                <div class="video-container"><video id="videoPlayer" src="${url}" data-video-id="${video.id}"></video></div>
+                <div class="player-info">
+                    <div class="player-title-row">
+                        <span class="player-title">${escapeHtml(video.name)}</span>
+                        ${aiBadgeHtml}
+                        ${editButtonHtml}
+                    </div>
+                    <div class="player-owner" data-owner="${video.uploader}">${escapeHtml(ownerDisplay)}</div>
+                    <div class="player-time">${formatTimeAgo(video.uploadedAt)}</div>
+                    ${hashtagsHtml}
+                    <div style="font-size:13px; color:#aaa; margin-top:6px;">${video.views || 0} views</div>
+                    <div style="font-size:14px; color:#aaa; margin-top:10px;">${escapeHtml(video.description || '')}</div>
+                    ${ownerBio ? `<div style="font-size:13px; color:#6a8a9a; margin-top:10px;">${escapeHtml(ownerBio)}</div>` : ''}
+                </div>
+                <div class="controls-bar">
+                    <button class="ctrl-btn play" id="playPauseBtn">Pause</button>
+                    <button class="ctrl-btn" id="stopBtn">Stop</button>
+                    <button class="ctrl-btn" id="fullscreenBtn">⛶ Fullscreen</button>
+                    <div class="progress-area">
+                        <span id="currentTime" style="font-size:13px; color:#aaa;">00:00</span>
+                        <div class="progress-bar-bg" id="progressBg"><div class="progress-fill" id="progressFill"></div></div>
+                        <span id="totalTime" style="font-size:13px; color:#aaa;">/ 00:00</span>
+                    </div>
+                    <div><span style="color:#aaa;">🔊</span><input type="range" id="volumeSlider" min="0" max="100" value="${currentVolume}" style="width:90px;"></div>
+                </div>
+            </div>`;
+        mainContent.innerHTML = html;
+        const videoEl = document.getElementById('videoPlayer');
+        currentVideoElement = videoEl;
+        currentVideoElement.videoId = video.id;
+        videoEl.volume = currentVolume / 100;
+        
+        const playPause = document.getElementById('playPauseBtn'), stopBtn = document.getElementById('stopBtn'), fullscreenBtn = document.getElementById('fullscreenBtn'), progBg = document.getElementById('progressBg'), volSlider = document.getElementById('volumeSlider'), curSpan = document.getElementById('currentTime'), totalSpan = document.getElementById('totalTime'), fill = document.getElementById('progressFill');
+        
+        videoEl.addEventListener('loadedmetadata', () => { totalSpan.innerText = `/ ${Math.floor(videoEl.duration/60)}:${Math.floor(videoEl.duration%60).toString().padStart(2,'0')}`; });
+        videoEl.addEventListener('timeupdate', () => { if(videoEl.duration){ fill.style.width = `${(videoEl.currentTime/videoEl.duration)*100}%`; curSpan.innerText = `${Math.floor(videoEl.currentTime/60)}:${Math.floor(videoEl.currentTime%60).toString().padStart(2,'0')}`; } });
+        
+        playPause.onclick = () => videoEl.paused ? videoEl.play() : videoEl.pause();
+        stopBtn.onclick = () => { videoEl.pause(); applySearchAndRender(); };
+        fullscreenBtn.onclick = toggleFullscreen;
+        progBg.onclick = (e) => { const rect = progBg.getBoundingClientRect(); const p = (e.clientX - rect.left)/rect.width; if(videoEl.duration) videoEl.currentTime = p * videoEl.duration; };
+        volSlider.oninput = (e) => { currentVolume = parseInt(e.target.value); videoEl.volume = currentVolume/100; };
+        
+        document.querySelector('.player-owner')?.addEventListener('click', () => filterByCreator(video.uploader));
+        
+        const editBtn = document.getElementById('editVideoBtn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => openEditModal(video));
+        }
+        
+        const startTracking = () => { viewWatchTimeout = setTimeout(() => { if (!viewCounted && videoEl && !videoEl.paused && videoEl.currentTime >= 10) { viewCounted = true; incrementView(video.uploader, video.id); showToast("View counted"); } }, 10000); };
+        const cancelTracking = () => { if(viewWatchTimeout){ clearTimeout(viewWatchTimeout); viewWatchTimeout=null; } };
+        videoEl.addEventListener('play', startTracking);
+        videoEl.addEventListener('pause', cancelTracking);
+        videoEl.addEventListener('ended', cancelTracking);
+        videoEl.play().catch(console.log);
+        if(updateInterval) clearInterval(updateInterval);
+        updateInterval = setInterval(() => { if(videoEl?.duration) totalSpan.innerText = `/ ${Math.floor(videoEl.duration/60)}:${Math.floor(videoEl.duration%60).toString().padStart(2,'0')}`; }, 500);
+    }
+
+    function incrementView(uploader, videoId) {
+        const user = allUsers[uploader];
+        if (!user || !user.videos) return;
+        const idx = user.videos.findIndex(v => v.id === videoId);
+        if (idx !== -1) { user.videos[idx].views = (user.videos[idx].views || 0) + 1; saveData(); rebuildFeed(); }
+    }
+
+    // AUTH
+    let authMode = 'login';
+    function openAuthModal(mode) { authMode = mode; document.getElementById('authTitle').innerText = mode === 'login' ? 'Login' : 'Create Account'; document.getElementById('submitAuthBtn').innerText = mode === 'login' ? 'Login' : 'Sign Up'; document.getElementById('authModal').classList.add('active'); }
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); }
+    function handleAuth() {
+        const uname = document.getElementById('loginUser').value.trim();
+        const pwd = document.getElementById('loginPass').value.trim();
+        if (!uname || !pwd) { showToast("Fill all fields"); return; }
+        if (authMode === 'login') {
+            if (allUsers[uname] && allUsers[uname].passwordHash === hashPassword(pwd)) {
+                currentUser = JSON.parse(JSON.stringify(allUsers[uname])); currentUser.username = uname;
+                filterAI = currentUser.filterAI || false;
+                closeAuthModal(); updateUI(); rebuildFeed(); showToast(`Welcome ${currentUser.displayName || uname}`);
+            } else showToast("Invalid login");
+        } else {
+            if (allUsers[uname]) { showToast("Username exists"); return; }
+            allUsers[uname] = { username: uname, passwordHash: hashPassword(pwd), displayName: uname, bio: "", videos: [], filterAI: false, banned: false };
+            saveData();
+            currentUser = JSON.parse(JSON.stringify(allUsers[uname])); currentUser.username = uname;
+            filterAI = false;
+            closeAuthModal(); updateUI(); rebuildFeed(); showToast(`Account created! Welcome ${uname}`);
+        }
+    }
+    function logout() { if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl); currentUser = null; filterAI = false; updateUI(); rebuildFeed(); showToast("Logged out"); }
+    function updateUI() {
+        if (currentUser) { userDisplaySpan.innerText = currentUser.displayName || currentUser.username; authBtn.innerText = 'Account'; authBtn.onclick = () => openAccountModal(); }
+        else { userDisplaySpan.innerText = 'Guest'; authBtn.innerText = 'Login'; authBtn.onclick = () => openAuthModal('login'); }
+    }
+    function openAccountModal() {
+        if (!currentUser) return;
+        document.getElementById('accDisplayName').value = currentUser.displayName || currentUser.username;
+        document.getElementById('accBio').value = currentUser.bio || "";
+        document.getElementById('userVideoCount').innerText = (currentUser.videos?.length || 0);
+        const toggle = document.getElementById('aiToggle');
+        (currentUser.filterAI || false) ? toggle.classList.add('active') : toggle.classList.remove('active');
+        toggle.onclick = () => toggle.classList.toggle('active');
+        document.getElementById('accountModal').classList.add('active');
+    }
+    function closeAccountModal() { document.getElementById('accountModal').classList.remove('active'); }
+    function saveAccount() {
+        if (!currentUser) return;
+        const newName = document.getElementById('accDisplayName').value.trim();
+        const newBio = document.getElementById('accBio').value;
+        const newFilter = document.getElementById('aiToggle').classList.contains('active');
+        if (newName) currentUser.displayName = newName;
+        currentUser.bio = newBio || "";
+        currentUser.filterAI = newFilter;
+        filterAI = newFilter;
+        allUsers[currentUser.username] = JSON.parse(JSON.stringify(currentUser));
+        saveData(); rebuildFeed(); closeAccountModal(); updateUI(); showToast("Settings saved!");
+    }
+
+    // UPLOAD
+    let pendingThumb = null;
+    async function uploadVideo() {
+        if (!currentUser) { showToast("Login first"); return; }
+        if (Date.now() - lastUploadTime < COOLDOWN_MS) { showToast(`Wait ${Math.ceil((COOLDOWN_MS - (Date.now() - lastUploadTime))/1000)} seconds`); return; }
+        const file = document.getElementById('videoFile').files[0];
+        const title = document.getElementById('videoTitle').value.trim();
+        if (!file || !title) { showToast("Video & title required"); return; }
+        
+        const id = Date.now() + '_' + Math.random().toString(36).substr(2,6);
+        const desc = document.getElementById('videoDesc').value;
+        const hashtags = document.getElementById('videoHashtags').value.split(',').map(t=>t.trim()).filter(t=>t).map(t=>t.startsWith('#')?t:'#'+t);
+        const isAI = document.getElementById('isAICheck').checked;
+        
+        await saveVideoBlob(currentUser.username, id, file);
+        
+        let finalThumb = pendingThumb;
+        if (!finalThumb) {
+            showToast("Generating thumbnail...");
+            await new Promise((resolve) => {
+                extractFirstFrame(file, (thumb) => { finalThumb = thumb; resolve(); });
+            });
+        }
+        
+        const newVideo = { id, name: title, description: desc, hashtags, thumbnail: finalThumb, views: 0, isAI, uploadedAt: Date.now() };
+        if (!currentUser.videos) currentUser.videos = [];
+        currentUser.videos.push(newVideo);
+        allUsers[currentUser.username].videos = currentUser.videos;
+        saveData();
+        lastUploadTime = Date.now();
+        rebuildFeed();
+        closeUploadModal();
+        resetUploadForm();
+        showToast(`"${title}" uploaded!${isAI ? ' (AI-generated)' : ''}`);
+    }
+    function openUploadModal() { if (!currentUser) { showToast("Login first"); return; } resetUploadForm(); document.getElementById('uploadModal').classList.add('active'); }
+    function closeUploadModal() { document.getElementById('uploadModal').classList.remove('active'); }
+    function resetUploadForm() { 
+        document.getElementById('videoFile').value = ''; document.getElementById('videoTitle').value = ''; document.getElementById('videoDesc').value = ''; 
+        document.getElementById('videoHashtags').value = ''; document.getElementById('isAICheck').checked = false; document.getElementById('thumbFile').value = ''; 
+        document.getElementById('thumbPreview').innerHTML = 'Add thumbnail (optional)'; pendingThumb = null; 
+    }
+    document.getElementById('thumbFile')?.addEventListener('change', (e) => { 
+        const f = e.target.files[0]; 
+        if(f && f.type.startsWith('image/')){ 
+            const r = new FileReader(); 
+            r.onload = (ev) => { pendingThumb = ev.target.result; const pv = document.getElementById('thumbPreview'); pv.style.backgroundImage = `url(${ev.target.result})`; pv.style.backgroundSize = 'cover'; pv.innerHTML = ''; }; 
+            r.readAsDataURL(f); 
+        } else { pendingThumb = null; } 
+    });
+    
+    // Edit modal thumbnail preview
+    document.getElementById('editThumbFile')?.addEventListener('change', (e) => {
+        const f = e.target.files[0];
+        if (f && f.type.startsWith('image/')) {
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const preview = document.getElementById('editThumbPreview');
+                preview.style.backgroundImage = `url(${ev.target.result})`;
+                preview.style.backgroundSize = 'cover';
+                preview.innerHTML = '';
+            };
+            r.readAsDataURL(f);
+        }
+    });
+
+    searchInput.addEventListener('input', (e) => { currentSearchQuery = e.target.value; applySearchAndRender(); });
+    document.getElementById('homeBtn')?.addEventListener('click', () => { currentSearchQuery = ''; searchInput.value = ''; applySearchAndRender(); });
+    document.getElementById('homeLogoBtn')?.addEventListener('click', () => { currentSearchQuery = ''; searchInput.value = ''; applySearchAndRender(); });
+    document.getElementById('uploadBtn')?.addEventListener('click', openUploadModal);
+    document.getElementById('cancelAuthBtn')?.addEventListener('click', closeAuthModal);
+    document.getElementById('submitAuthBtn')?.addEventListener('click', handleAuth);
+    document.getElementById('switchAuthBtn')?.addEventListener('click', () => openAuthModal(authMode === 'login' ? 'signup' : 'login'));
+    document.getElementById('closeAccountBtn')?.addEventListener('click', closeAccountModal);
+    document.getElementById('saveAccountBtn')?.addEventListener('click', saveAccount);
+    document.getElementById('logoutBtn')?.addEventListener('click', () => { logout(); closeAccountModal(); });
+    document.getElementById('cancelUploadBtn')?.addEventListener('click', closeUploadModal);
+    document.getElementById('confirmUploadBtn')?.addEventListener('click', uploadVideo);
+    document.getElementById('cancelEditBtn')?.addEventListener('click', closeEditModal);
+    document.getElementById('saveEditBtn')?.addEventListener('click', saveVideoEdits);
+
+    loadData();
+    updateUI();
+    applySearchAndRender();
+</script>
+</body>
+</html>
